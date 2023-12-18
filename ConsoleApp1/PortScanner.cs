@@ -45,6 +45,7 @@ namespace ConsoleApp1
             }
             Console.WriteLine("Нажмите любую кнопку...");
             Console.ReadLine();
+            Console.Clear();
         }
     }
 }
