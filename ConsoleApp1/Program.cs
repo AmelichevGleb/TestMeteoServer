@@ -22,7 +22,8 @@ namespace ConsoleApp1
                 Console.WriteLine("1 - тесты байтов");
                 Console.WriteLine("2 - тесты портов");
                 Console.WriteLine("3 - тестовая метеостанция");
-                Console.WriteLine("4 - выход");
+                Console.WriteLine("4 - неведомый сервер");
+                Console.WriteLine("5 - выход");
                 Console.Write("ввод символа: ");
                 int choice = Convert.ToInt32(Console.ReadLine());
 
@@ -91,6 +92,51 @@ namespace ConsoleApp1
                         }
                         break;
                     case 4:
+                        Console.Clear();
+                        Console.WriteLine("Тестовый сервер: ");
+                        IPHostEntry ipHost1 = Dns.GetHostEntry("localhost");
+                        IPAddress ipAddr1 = ipHost1.AddressList[0];
+                        IPEndPoint ipEndPoint1 = new IPEndPoint(ipAddr1, 11000);
+                        byte[] Message1 = new byte[] { 0x01, 0x03, 0xB4, 0x82, 0x80, 0x00, 0x00, 0x00, 0x00, 0x09, 0xA1, 0x27, 0x1D, 0x00, 0x19, 0x00, 0x00, 0x01, 0x01, 0x00, 0x1D, 0x00, 0x00, 0x00, 0x92 };
+                        Socket sListener1 = new Socket(ipAddr1.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                        try
+                        {
+                            sListener1.Bind(ipEndPoint1);
+                            sListener1.Listen(10);
+                            while (true)
+                            {
+                                Console.WriteLine("Ожидаем соединение через порт {0}", ipEndPoint1);
+                                Socket handler = sListener1.Accept();
+                                string data = null;
+                                byte[] bytes = new byte[1024];
+                                int bytesRec = handler.Receive(bytes);
+                                data += Encoding.UTF8.GetString(bytes, 0, bytesRec);
+                                Console.WriteLine("РЕЗУЛЬТАТ !!!!   Array Output, Size: {0} Data: " + BitConverter.ToString(bytes), bytes.Length);
+                                string reply = "Спасибо за запрос в " + data.Length.ToString()
+                                        + " символов";
+                                byte[] msg = Encoding.UTF8.GetBytes(reply);
+                               
+                                if (data.IndexOf("<TheEnd>") > -1)
+                                {
+                                    Console.WriteLine("Сервер завершил соединение с клиентом.");
+                                    break;
+                                }
+                                handler.Shutdown(SocketShutdown.Both);
+                                handler.Close();
+                            }
+                        }
+
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.ToString());
+                        }
+                        finally
+                        {
+                            Console.ReadLine();
+                        }
+                        break;
+                        break;
+                    case 5:
                         exit = false;
                         break;
                 }
