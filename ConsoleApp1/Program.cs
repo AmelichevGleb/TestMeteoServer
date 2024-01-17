@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Net;
-using System.Net.Http;
 using System.Net.Sockets;
-using System.Reflection.Emit;
 using System.Text;
 
 namespace ConsoleApp1
@@ -100,6 +98,7 @@ namespace ConsoleApp1
                         TcpListener tcpListener = new TcpListener(ipAddr1, 11000);
                         byte[] Message1 = new byte[] { 0x01, 0x03, 0xB4, 0x82, 0x80, 0x00, 0x00, 0x00, 0x00, 0x09, 0xA1, 0x27, 0x1D, 0x00, 0x19, 0x00, 0x00, 0x01, 0x01, 0x00, 0x1D, 0x00, 0x00, 0x00, 0x92 };
                         Socket sListener1 = new Socket(ipAddr1.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                        bool flag = false;
                         try
                         {
                             TcpListener server = new TcpListener(IPAddress.Any, 11000);
@@ -111,12 +110,27 @@ namespace ConsoleApp1
                                
                                 while (client.Connected)  // пока клиент подключен, ждем приходящие сообщения
                                 {
+                                    if (client.Connected == true && flag == false)
+                                    {
+                                        Console.WriteLine("Клиент подкл");
+                                        flag = true;
+                                    }
+                                  
                                     byte[] msg = new byte[1024];     // готовим место для принятия сообщения
                                     int count = ns.Read(msg, 0, msg.Length);   // читаем сообщение от клиента
-                                    Console.Write(Encoding.Default.GetString(msg, 0, count)); // выводим на экран полученное сообщение в виде строки
-                                    byte[] hello = new byte[100];   // любое сообщение должно быть сериализовано
-                                    hello = Encoding.Default.GetBytes("hello world");  // конвертируем строку в массив байт
-                                    ns.Write(hello, 0, hello.Length);     // отправляем сообщение
+                                    if (count != 0)
+                                    {
+                                        Console.WriteLine(Encoding.Default.GetString(msg, 0, count)); // выводим на экран полученное сообщение в виде строки
+                                        byte[] hello = new byte[100];   // любое сообщение должно быть сериализовано
+                                        hello = Encoding.Default.GetBytes("hello world");  // конвертируем строку в массив байт
+                                        ns.Write(hello, 0, hello.Length);     // отправляем сообщение
+                                    }
+                                    else { 
+                                        Console.WriteLine("Клиент откл");
+                                        flag = false;
+                                        break;
+                                    }
+                                    
                                 }
                             }
                         }
