@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Net;
+using System.Net.Http;
 using System.Net.Sockets;
 using System.Reflection.Emit;
 using System.Text;
@@ -96,33 +97,27 @@ namespace ConsoleApp1
                         Console.WriteLine("Тестовый сервер: ");
                         IPHostEntry ipHost1 = Dns.GetHostEntry("localhost");
                         IPAddress ipAddr1 = ipHost1.AddressList[0];
-                        IPEndPoint ipEndPoint1 = new IPEndPoint(ipAddr1, 11000);
+                        TcpListener tcpListener = new TcpListener(ipAddr1, 11000);
                         byte[] Message1 = new byte[] { 0x01, 0x03, 0xB4, 0x82, 0x80, 0x00, 0x00, 0x00, 0x00, 0x09, 0xA1, 0x27, 0x1D, 0x00, 0x19, 0x00, 0x00, 0x01, 0x01, 0x00, 0x1D, 0x00, 0x00, 0x00, 0x92 };
                         Socket sListener1 = new Socket(ipAddr1.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                         try
                         {
-                            sListener1.Bind(ipEndPoint1);
-                            sListener1.Listen(10);
+                            TcpListener server = new TcpListener(IPAddress.Any, 11000);
+                            server.Start();  // запускаем сервер
                             while (true)
                             {
-                                Console.WriteLine("Ожидаем соединение через порт {0}", ipEndPoint1);
-                                Socket handler = sListener1.Accept();
-                                string data = null;
-                                byte[] bytes = new byte[1024];
-                                int bytesRec = handler.Receive(bytes);
-                                data += Encoding.UTF8.GetString(bytes, 0, bytesRec);
-                                Console.WriteLine("РЕЗУЛЬТАТ !!!!   Array Output, Size: {0} Data: " + BitConverter.ToString(bytes), bytes.Length);
-                                string reply = "Спасибо за запрос в " + data.Length.ToString()
-                                        + " символов";
-                                byte[] msg = Encoding.UTF8.GetBytes(reply);
+                                TcpClient client = server.AcceptTcpClient();  // ожидаем подключение клиента
+                                NetworkStream ns = client.GetStream(); // для получения и отправки сообщений
                                
-                                if (data.IndexOf("<TheEnd>") > -1)
+                                while (client.Connected)  // пока клиент подключен, ждем приходящие сообщения
                                 {
-                                    Console.WriteLine("Сервер завершил соединение с клиентом.");
-                                    break;
+                                    byte[] msg = new byte[1024];     // готовим место для принятия сообщения
+                                    int count = ns.Read(msg, 0, msg.Length);   // читаем сообщение от клиента
+                                    Console.Write(Encoding.Default.GetString(msg, 0, count)); // выводим на экран полученное сообщение в виде строки
+                                    byte[] hello = new byte[100];   // любое сообщение должно быть сериализовано
+                                    hello = Encoding.Default.GetBytes("hello world");  // конвертируем строку в массив байт
+                                    ns.Write(hello, 0, hello.Length);     // отправляем сообщение
                                 }
-                                handler.Shutdown(SocketShutdown.Both);
-                                handler.Close();
                             }
                         }
 
@@ -134,7 +129,6 @@ namespace ConsoleApp1
                         {
                             Console.ReadLine();
                         }
-                        break;
                         break;
                     case 5:
                         exit = false;
