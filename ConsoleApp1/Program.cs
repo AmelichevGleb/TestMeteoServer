@@ -116,7 +116,7 @@ namespace ConsoleApp1
                                         flag = true;
                                     }
                                   
-                                    byte[] msg = new byte[1024];     // готовим место для принятия сообщения
+                                    byte[] msg = new byte[8096];     // готовим место для принятия сообщения
                                     int count = ns.Read(msg, 0, msg.Length);   // читаем сообщение от клиента
                                     if (count != 0)
                                     {
