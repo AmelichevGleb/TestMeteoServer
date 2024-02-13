@@ -6,6 +6,7 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
+using System.IO;
 
 namespace ConsoleApp1
 {
@@ -54,7 +55,7 @@ namespace ConsoleApp1
                         //тестовый сервер кидает данные (как будто метеостанция) 
                         Console.Clear();
                         Console.WriteLine("Тестовый сервер: ");
-                        IPHostEntry ipHost = Dns.GetHostEntry("localhost");
+                        IPHostEntry ipHost = Dns.GetHostEntry("127.0.0.1");
                         IPAddress ipAddr = ipHost.AddressList[0];
                         IPEndPoint ipEndPoint = new IPEndPoint(ipAddr, 11000);
                         byte[] Message = new byte[] { 0x01, 0x03, 0xB4, 0x82, 0x80, 0x00, 0x00, 0x00, 0x00, 0x09, 0xA1, 0x27, 0x1D, 0x00, 0x19, 0x00, 0x00, 0x01, 0x01, 0x00, 0x1D, 0x00, 0x00, 0x00, 0x92 };
@@ -154,38 +155,105 @@ namespace ConsoleApp1
 
                     case 5:
                         // Клиент кидает на сервер байты
-                        Console.Clear();
-                        Console.WriteLine("Ввести IP");
-                        string ip = Console.ReadLine();
-                        Console.WriteLine("ip = {0}", ip);
-                        Console.WriteLine("Ввести Port");
-                        string port = Console.ReadLine();
-                        Console.WriteLine("port = {0}", ip);
-                        // Инициализация
-                        TcpClient newClient = new TcpClient();
-                        newClient.Connect(ip, Convert.ToInt32(port));
 
                         byte[] B4c = new byte[] { 0x00, 0x02, 0x01, 0xE2 };
                         byte[] Btest = new byte[] { 0x00, 0x00, 0x01, 0xE3 };
                         byte[] Btest1 = new byte[] { 0x00, 0x00, 0x01, 0xE4 };
                         byte[] Btest2 = new byte[] { 0x00, 0x00, 0x01, 0xE5 };
                         byte[] Btest3 = new byte[] { 0x00, 0x00, 0x01, 0xE6 };
-
-                        byte[][] lists = new byte[][] { B4c, Btest, Btest1, Btest2 , Btest3 };
-
+                        byte[][] lists = new byte[][] { B4c, Btest, Btest1, Btest2, Btest3 };
+                        
+                        Console.Clear();
+                        Console.ReadLine();
+                        // Console.WriteLine("Ввести IP");
+                       // string ip = Console.ReadLine();
+                       // Console.WriteLine("ip = {0}", ip);
+                       // Console.WriteLine("Ввести Port");
+                      ///  string port = Console.ReadLine();
+                       // Console.WriteLine("port = {0}", ip);
+                        // Инициализация
+                        TcpClient newClient = new TcpClient();
+                        string ip = "127.0.0.1";
+                        int port = 11000;
+                                    bool connect = false;
                         while (true)
                         {
-                            NetworkStream tcpStream = newClient.GetStream();
-                            Random rd = new Random();
-                            int randomIndex = rd.Next(0, lists.Length);
+                            try
+                            {
+                                newClient.Connect(ip, port);
+                                Console.WriteLine("Мы подключены");
 
+                                connect = true;
+                                while (true)
+                                {
+                                    try
+                                    {
+                                        NetworkStream tcpStream = newClient.GetStream();
+                                        Random rd = new Random();
+                                        int randomIndex = rd.Next(0, lists.Length);
+                                        tcpStream.Write(lists[randomIndex], 0, lists[randomIndex].Length);
+                                        Console.WriteLine(BitConverter.ToString(lists[randomIndex]));
+                                        Thread.Sleep(400);
+                                        byte[] msg = new byte[8096];
+                                        int count = tcpStream.Read(msg, 0, msg.Length);
+                                        if (count == 0) { Console.WriteLine("было отключение"); }
+                                    }
+                                    catch (IOException e)
+                                    {
+                                        break;
+                                    }
 
+                                }
+                                /*
+                                byte[] msg = new byte[8096];
+                                int count = tcpStream.Read(msg, 0, msg.Length);
 
-                            tcpStream.Write(lists[randomIndex], 0, lists[randomIndex].Length);
-                            Thread.Sleep(400);
+                                if (count == 0) { }
+                                
+                                var t = newClient.Connected;
+                                if (connect == false)
+                                { newClient.Connect(ip, Convert.ToInt32(port));  t = newClient.Connected; if (newClient.Connected == true) connect = true; }
+                                }
+                                else
+                                {
+                                
+                                    newClient.Close();
+                                    newClient = new TcpClient();
+                                    connect = false;
+                                    Console.WriteLine("Были отключены ");
+                                   // newClient.Connect(ip, Convert.ToInt32(port));
 
+                                }*/
+                            }
+                            catch (ObjectDisposedException e)
+                            {
+                                Console.WriteLine("АААА");
+                                newClient = new TcpClient();
+                               
+                            }
+                            catch (SocketException ex)
+                            {
+                                Console.WriteLine("ТУт? {0}", ex.ErrorCode);
+                                if (ex.ErrorCode == 10056)
+                                {
+                                    newClient.Close();
+                                    Console.WriteLine("ТУт? {0}", ex.ErrorCode);
+                                }
+
+                                if (ex.ErrorCode == 10061)
+                                {
+                                    Console.WriteLine("попытка подключиться ...");
+                                    Thread.Sleep(800);
+                                }
+                                //Console.WriteLine(ex.ErrorCode);
+                                //Console.WriteLine("Попытка подключение к {0}:{1}",ip, port);
+
+                                Thread.Sleep(400);
+                                connect = false;
+                            }
+                            // finally { Console.WriteLine("Попытка повторно подключится"); connect = false; }
                         }
-                        break;
+                            break;
                     case 6:
                         exit = false;
                         break;
