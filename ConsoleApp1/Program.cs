@@ -7,6 +7,12 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.IO;
+using NAudio.Wave;
+using NAudio.FileFormats;
+using NAudio.CoreAudioApi;
+using NAudio;
+using System.Runtime.InteropServices.ComTypes;
+using System.Reflection.Emit;
 
 namespace ConsoleApp1
 {
@@ -20,16 +26,20 @@ namespace ConsoleApp1
 
         static void Main(string[] args)
         {
-
+            Console.WriteLine("Варианты 172.20.10.4(Касперский)  172.20.10.3(без касперского)");
+            Console.WriteLine("Ввести IP");
+             string ipTrue = Console.ReadLine();
+            Console.WriteLine(ipTrue);
             while (exit)
             {
                 Console.WriteLine("1 - тесты байтов");
                 Console.WriteLine("2 - тесты портов");
-                Console.WriteLine("3 - тестовая метеостанция");
-                Console.WriteLine("4 - неведомый сервер      \n Принимает данные с клиента (работает 127.0.0.1   4444) ");
-                Console.WriteLine("5 - Клиент-байт    \n    Отправляет на 127.0.0.1 5555 рандомные байты (сигнал ЧС)");
-                Console.WriteLine("6 - отправка сообщения по TCP порта и ip");
-                Console.WriteLine("7 - выход");
+                Console.WriteLine("3 - тестовая метеостанция {0} - 2222 ", ipTrue);
+                Console.WriteLine("4 - неведомый сервер      \n Принимает данные с клиента (работает {0}   4444) ",ipTrue);
+                Console.WriteLine("5 - Клиент-байт    \n    Отправляет на {0} 5555 рандомные байты (сигнал ЧС)", ipTrue);
+                Console.WriteLine("6 - отправка сообщения по TCP порта и ip  {0}  6666", ipTrue);
+                Console.WriteLine("7 - UDP-сервер");
+                Console.WriteLine("8 - UDP-клиент");
                 Console.Write("ввод символа: ");
                 int choice = Convert.ToInt32(Console.ReadLine());
 
@@ -56,7 +66,7 @@ namespace ConsoleApp1
                         //тестовый сервер кидает данные (как будто метеостанция) 
                         Console.Clear();
                         Console.WriteLine("Тестовый сервер: ");
-                        IPHostEntry ipHost = Dns.GetHostEntry("127.0.0.1");
+                        IPHostEntry ipHost = Dns.GetHostEntry(ipTrue);
                         IPAddress ipAddr = ipHost.AddressList[0];
                         IPEndPoint ipEndPoint = new IPEndPoint(ipAddr, 2222);
                         byte[] Message = new byte[] { 0x01, 0x03, 0xB4, 0x82, 0x80, 0x00, 0x00, 0x00, 0x00, 0x09, 0xA1, 0x27, 0x1D, 0x00, 0x19, 0x00, 0x00, 0x01, 0x01, 0x00, 0x1D, 0x00, 0x00, 0x00, 0x92 };
@@ -101,7 +111,7 @@ namespace ConsoleApp1
                         //Teстовый сервер, выводит информацию о том, что приходит и с какого IP адреса 
                         Console.Clear();
                         Console.WriteLine("Тестовый сервер: ");
-                        IPHostEntry ipHost1 = Dns.GetHostEntry("127.0.0.1");
+                        IPHostEntry ipHost1 = Dns.GetHostEntry(ipTrue);
                         IPAddress ipAddr1 = ipHost1.AddressList[0];
                         byte[] Message1 = new byte[] { 0x01, 0x03, 0xB4, 0x82, 0x80, 0x00, 0x00, 0x00, 0x00, 0x09, 0xA1, 0x27, 0x1D, 0x00, 0x19, 0x00, 0x00, 0x01, 0x01, 0x00, 0x1D, 0x00, 0x00, 0x00, 0x92 };
                         Socket sListener1 = new Socket(ipAddr1.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
@@ -129,9 +139,9 @@ namespace ConsoleApp1
                                     if (count != 0)
                                     {
                                         Console.WriteLine(Encoding.Default.GetString(msg, 0, count)); // выводим на экран полученное сообщение в виде строки
-                                        byte[] hello = new byte[100];   // любое сообщение должно быть сериализовано
-                                        hello = Encoding.Default.GetBytes("hello world");  // конвертируем строку в массив байт
-                                        ns.Write(hello, 0, hello.Length);     // отправляем сообщение
+                                        //byte[] hello = new byte[100];   // любое сообщение должно быть сериализовано
+                                        //hello = Encoding.Default.GetBytes("hello world");  // конвертируем строку в массив байт
+                                       // ns.Write(hello, 0, hello.Length);     // отправляем сообщение
                                     }
                                     else { 
                                         Console.WriteLine("Клиент откл");
@@ -167,12 +177,7 @@ namespace ConsoleApp1
                         int port = 5555;
  
                         Console.Clear();
-                        // Console.WriteLine("Ввести IP");
-                        // string ip = Console.ReadLine();
-                        Console.WriteLine("ip = {0}", ip);
-                       // Console.WriteLine("Ввести Port");
-                      //  string port = Console.ReadLine();
-                        Console.WriteLine("port = {0}", port);
+;
                         // Инициализация
                         TcpClient newClient = new TcpClient();
                         bool connect = false;
@@ -180,7 +185,7 @@ namespace ConsoleApp1
                         {
                             try
                             {
-                                newClient.Connect(ip, Convert.ToInt32(port));
+                                newClient.Connect(ipTrue, Convert.ToInt32(port));
                                 Console.WriteLine("Мы подключены");
 
                                 connect = true;
@@ -194,9 +199,10 @@ namespace ConsoleApp1
                                         tcpStream.Write(lists[randomIndex], 0, lists[randomIndex].Length);
                                         Console.WriteLine(BitConverter.ToString(lists[randomIndex]));
                                         Thread.Sleep(400);
-                                        byte[] msg = new byte[8096];
+                                        byte[] msg = new byte[4];
                                         int count = tcpStream.Read(msg, 0, msg.Length);
                                         if (count == 0) { Console.WriteLine("было отключение"); }
+                                        Thread.Sleep(1000);
                                     }
                                     catch (IOException e)
                                     {
@@ -240,12 +246,8 @@ namespace ConsoleApp1
 
 
                         Console.Clear();
-                        Console.ReadLine();
-                        Console.WriteLine("Ввести IP");
-                        string ip1 = Console.ReadLine();
-                        Console.WriteLine("ip = {0}", ip1);
-                        Console.WriteLine("Ввести Port");
-                        string port1 = Console.ReadLine();
+          
+                        string port1 = "6666";
                         Console.WriteLine("port = {0}", port1);
                         // Инициализация
                         TcpClient newClient1 = new TcpClient();
@@ -254,27 +256,48 @@ namespace ConsoleApp1
                         {
                             try
                             {
-                                newClient1.Connect(ip1, Convert.ToInt32(port1));
+                                newClient1.Connect(ipTrue, Convert.ToInt32(port1));
                                 Console.WriteLine("Мы подключены");
-
+                                byte[] msg = new byte[8096];
                                 connect = true;
                                 while (true)
                                 {
                                     try
                                     {
+                                        Console.WriteLine("Что Кинуть");
+                                        int swit = Convert.ToInt32(Console.ReadLine());
                                         NetworkStream tcpStream = newClient1.GetStream();
-                                        byte[] message = Encoding.UTF8.GetBytes("127.0.0.1;2222;");
-                                        tcpStream.Write(message, 0, message.Length);
-                                        //Console.WriteLine(" ---> {0}",BitConverter.ToString(message));
-                                   
-                                        byte[] msg = new byte[8096];
-                                        int count = tcpStream.Read(msg, 0, msg.Length);
-                                        var t = Encoding.ASCII.GetString(msg);
-                                        Console.WriteLine("<---------- {0}", t);
-                                        Console.WriteLine("Текст");
-                                        if (count == 0) { Console.WriteLine("было отключение"); }
+                                        switch (swit)
+                                        {
+                                            case 0:
+                                                byte[] message = Encoding.UTF8.GetBytes("127.0.0.1;2222;");
+                                                tcpStream.Write(message, 0, message.Length);
+                                                //Console.WriteLine(" ---> {0}",BitConverter.ToString(message));
+
+                                              
+                                                int count = tcpStream.Read(msg, 0, msg.Length);
+                                                var t = Encoding.ASCII.GetString(msg, 0, count);
+                                                Console.WriteLine("<---------- {0}", t);
+                                                Console.WriteLine("Текст");
+                                                if (count == 0) { Console.WriteLine("было отключение"); }
+                                                break;
+
+                                            case 1:
+                                              
+                                                string t1 = null;
+                                                message = Encoding.UTF8.GetBytes("33;");
+                                                string output = Encoding.UTF8.GetString(message);
+                                                Console.WriteLine(output);
+                                                tcpStream.Write(message, 0, message.Length);
+                                                int count1 = tcpStream.Read(msg, 0, msg.Length);
+                                                t1 = Encoding.ASCII.GetString(msg, 0, count1);
+                                                Console.WriteLine("<---------- {0}", t1);
+                                                Console.WriteLine("Текст");
+                                                if (count1 == 0) { Console.WriteLine("было отключение"); }
+                                                break;
+                                        }
                                         Thread.Sleep(1000);
-                                  }
+                                    }
                                     catch (IOException e)
                                     {
                                         break;
@@ -333,7 +356,12 @@ namespace ConsoleApp1
                         break;
 
                     case 7:
-                        exit = false;
+                        UdpFileServer udpFileServer = new UdpFileServer();
+                        udpFileServer.StartServer();
+                        break;
+                    case 8:
+                        UDPClient udpClient = new UDPClient();
+                        udpClient.UdpClientStart();
                         break;
                 }
             }
